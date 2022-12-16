@@ -7,6 +7,7 @@ import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import bodyParser from 'body-parser';
 import authRoutes from './routes/authRoutes';
+import favouriteRoutes from './routes/favouriteRoutes';
 
 dotenv.config();
 
@@ -24,6 +25,7 @@ app.use(cors());
 
 // add routes for our app
 app.use('/api/auth', authRoutes);
+app.use('/api/favourites', favouriteRoutes);
 
 
 app.get('/', (req, res) => {
