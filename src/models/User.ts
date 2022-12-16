@@ -1,4 +1,4 @@
-import mongoose, { Document, Model } from 'mongoose';
+import mongoose, { Document, Model } from "mongoose";
 
 export interface IUser {
   name: string;
@@ -7,6 +7,10 @@ export interface IUser {
   image?: string;
   imageThumb?: string;
   role: string;
+  albums: string[];
+  artists: string[];
+  songs: string[];
+  playlists: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -37,11 +41,39 @@ const UserSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['user', 'admin'],
-      default: 'user',
+      enum: ["user", "admin"],
+      default: "user",
     },
+    albums: [
+      {
+        type: mongoose.Types.ObjectId,
+        ref: "Album",
+        default: [],
+      },
+    ],
+    artists: [
+      {
+        type: mongoose.Types.ObjectId,
+        ref: "Artist",
+        default: [],
+      },
+    ],
+    playlists: [
+      {
+        type: mongoose.Types.ObjectId,
+        ref: "Playlist",
+        default: [],
+      },
+    ],
+    songs: [
+      {
+        type: mongoose.Types.ObjectId,
+        ref: "Song",
+        default: [],
+      },
+    ],
   },
   { timestamps: true }
 );
 
-export default mongoose.model<IUserModel>('User', UserSchema);
+export default mongoose.model<IUserModel>("User", UserSchema);
