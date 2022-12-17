@@ -3,7 +3,17 @@ import Album from '../models/Album';
 import Artist from '../models/Artist';
 import User from '../models/User';
 
-export const getAlbums = async (req: Request, res: Response, next: NextFunction) => {};
+export const getAlbums = async (req: Request, res: Response, next: NextFunction) => {
+  const userId = req.userId;
+
+  try {
+    const user = await User.findById(userId).populate('albums');
+    return res.status(200).json(user?.albums);
+  } catch (error) {
+    return res.status(400).json(error);
+  }
+
+};
 
 export const getPlaylists = async (req: Request, res: Response, next: NextFunction) => {};
 
