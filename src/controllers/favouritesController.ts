@@ -43,7 +43,7 @@ export const addToFavArtist = async (req: Request, res: Response, next: NextFunc
         $push: { artists: newArtist.id },
       });
 
-      return res.status(201).json({ artist: newArtist, user });
+      return res.status(201).json({ artist: newArtist, message: 'Artist added from favorites' });
     } else {
 
       // artist already exists
@@ -53,13 +53,16 @@ export const addToFavArtist = async (req: Request, res: Response, next: NextFunc
         await user.updateOne({
           $pull: { artists: artist.id },
         });
+
+        return res.status(201).json({ artist: artist, message: 'Artist removed from favorites' });
       } else {
         await user.updateOne({
           $push: { artists: artist.id },
         });
+
+        return res.status(201).json({ artist: artist, message: 'Artist added from favorites' });
       }
 
-      return res.status(200).json({ artist: artist, user });
     }
   } catch (error) {
     return res.status(400).json('Something went wrong!!!');
