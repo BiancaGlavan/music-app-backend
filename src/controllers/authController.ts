@@ -63,9 +63,7 @@ export const profile = async (req: Request, res: Response, next: NextFunction) =
     const user = await User.findById(id)
       .select({ password: 0 })
       .populate('artists', 'deezer_id')
-      .populate('albums', 'deezer_id')
-      .populate('playlists', 'deezer_id')
-      .populate('songs', 'deezer_id');
+      .populate('albums', 'deezer_id');
 
     return res.status(200).json(user);
   } catch (error) {
