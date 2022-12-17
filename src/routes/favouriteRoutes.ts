@@ -5,13 +5,13 @@ import { isAuth } from "../middleware/isAuth";
 
 const router = express.Router();
 
-router.get("/albums", getAlbums);
+router.get("/albums", isAuth, getAlbums);
 
-router.get("/playlists", getPlaylists);
+router.get("/playlists", isAuth, getPlaylists);
 
 router.get("/artists", isAuth, getArtists);
 
-router.get("/songs", getSongs);
+router.get("/songs", isAuth, getSongs);
 
 router.post("/add/artist", isAuth, addToFavArtist);
 
