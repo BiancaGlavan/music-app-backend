@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcryptjs';
 import User from '../models/User';
 import jwt from 'jsonwebtoken';
+import Joi from 'joi';
 
 const signJWTToken = (userId: string, role = 'user') => {
   return jwt.sign({ id: userId, role: role }, process.env.JWT_SECRET || 'jwt_secret', {
@@ -10,24 +11,35 @@ const signJWTToken = (userId: string, role = 'user') => {
 };
 
 const signJWTRefreshToken = (userId: string, role = 'user') => {
-  return jwt.sign(
-    { id: userId, role: role },
-    process.env.JWT_REFRESH_SECRET || 'jwt_refresh_secret',
-    {
-      expiresIn: '2d',
-    }
-  );
+  return jwt.sign({ id: userId, role: role }, process.env.JWT_REFRESH_SECRET || 'jwt_refresh_secret', {
+    expiresIn: '2d',
+  });
 };
 
 export const register = async (req: Request, res: Response, next: NextFunction) => {
   try {
+
+    // validation schema for register
+    const joiSchema = Joi.object({
+      name: Joi.string().min(2).required(),
+      email: Joi.string().email().required(),
+      password: Joi.string().min(4).required(),
+    });
+
+    const { error } = joiSchema.validate(req.body);
+
+    // return error message if user input is not correct
+    if (error) {
+      return res.status(400).send(error);
+    }
+
     const salt = bcrypt.genSaltSync(10);
     const hash = bcrypt.hashSync(req.body.password, salt);
     const newUser = new User({ ...req.body, password: hash });
 
     await newUser.save();
 
-    return res.status(200).json({ success: 'User has been created!', user: newUser });
+    return res.status(201).json({ success: 'User has been created!', user: newUser });
   } catch (err) {
     return res.status(400).json({ err });
   }

@@ -4,6 +4,8 @@ import Artist from '../models/Artist';
 import Playlist from '../models/Playlist';
 import Song from '../models/Song';
 import User from '../models/User';
+import Joi from 'joi';
+
 
 export const getAlbums = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.userId;
@@ -66,6 +68,23 @@ export const addToFavArtist = async (req: Request, res: Response, next: NextFunc
     });
 
     if (!artist) {
+
+      // validation schema for artist
+      const joiSchema = Joi.object({
+        deezer_id: Joi.number().required(),
+        name: Joi.string().min(1).required(),
+        picture_big: Joi.string().required(),
+        nb_fan: Joi.number().required(),
+        picture: Joi.string(),
+      });
+  
+      const { error } = joiSchema.validate(req.body);
+  
+      // return error message if artist input is not correct
+      if (error) {
+        return res.status(400).send(error);
+      }
+
       const newArtist = new Artist({ ...req.body });
       await newArtist.save();
 
@@ -73,7 +92,7 @@ export const addToFavArtist = async (req: Request, res: Response, next: NextFunc
         $push: { artists: newArtist.id },
       });
 
-      return res.status(201).json({ artist: newArtist, message: 'Artist added from favorites' });
+      return res.status(201).json({ artist: newArtist, message: 'Artist added to favorites' });
     } else {
 
       // artist already exists
@@ -90,7 +109,7 @@ export const addToFavArtist = async (req: Request, res: Response, next: NextFunc
           $push: { artists: artist.id },
         });
 
-        return res.status(201).json({ artist: artist, message: 'Artist added from favorites' });
+        return res.status(201).json({ artist: artist, message: 'Artist added to favorites' });
       }
 
     }
