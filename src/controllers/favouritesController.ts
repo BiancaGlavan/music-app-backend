@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import Album from '../models/Album';
 import Artist from '../models/Artist';
 import Playlist from '../models/Playlist';
+import Song from '../models/Song';
 import User from '../models/User';
 
 export const getAlbums = async (req: Request, res: Response, next: NextFunction) => {
@@ -38,7 +39,16 @@ export const getArtists = async (req: Request, res: Response, next: NextFunction
   }
 };
 
-export const getSongs = async (req: Request, res: Response, next: NextFunction) => {};
+export const getSongs = async (req: Request, res: Response, next: NextFunction) => {
+  const userId = req.userId;
+
+  try {
+    const user = await User.findById(userId).populate('songs');
+    return res.status(200).json(user?.songs);
+  } catch (error) {
+    return res.status(400).json(error);
+  }
+};
 
 export const addToFavArtist = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.userId;
@@ -191,3 +201,53 @@ export const addToFavPlaylist = async (req: Request, res: Response, next: NextFu
   }
 };
 
+export const addToFavSong = async (req: Request, res: Response, next: NextFunction) => {
+  const userId = req.userId;
+
+  try {
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(400).json('Something went wrong');
+    }
+
+    // Check if song exists in db
+    const song = await Song.findOne({
+      deezer_id: req.body.deezer_id,
+    });
+
+    if (!song) {
+      const newSong = new Song({ ...req.body });
+      await newSong.save();
+
+      await user.updateOne({
+        $push: { songs: newSong.id },
+      });
+
+      return res.status(201).json({ song: newSong, message: 'Song added to favorites' });
+    } else {
+
+      // song already exists
+      // user possibly already liked the song
+
+      if(user.songs.includes(song.id)) {
+        await user.updateOne({
+          $pull: { songs: song.id },
+        });
+
+        return res.status(200).json({ song, message: 'Song removed from favorites' });
+
+      } else {
+        await user.updateOne({
+          $push: { songs: song.id },
+        });
+
+        return res.status(200).json({ song, message: 'Song added to favorites' });
+      }
+
+
+    }
+  } catch (error) {
+    return res.status(400).json('Something went wrong!!!');
+  }
+};
