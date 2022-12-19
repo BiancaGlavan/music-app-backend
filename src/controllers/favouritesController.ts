@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import Album from '../models/Album';
 import Artist from '../models/Artist';
+import Playlist from '../models/Playlist';
 import User from '../models/User';
 
 export const getAlbums = async (req: Request, res: Response, next: NextFunction) => {
@@ -15,7 +16,16 @@ export const getAlbums = async (req: Request, res: Response, next: NextFunction)
 
 };
 
-export const getPlaylists = async (req: Request, res: Response, next: NextFunction) => {};
+export const getPlaylists = async (req: Request, res: Response, next: NextFunction) => {
+  const userId = req.userId;
+
+  try {
+    const user = await User.findById(userId).populate('playlists');
+    return res.status(200).json(user?.playlists);
+  } catch (error) {
+    return res.status(400).json(error);
+  }
+};
 
 export const getArtists = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.userId;
@@ -129,3 +139,55 @@ export const addToFavAlbum = async (req: Request, res: Response, next: NextFunct
     return res.status(400).json('Something went wrong!!!');
   }
 };
+
+export const addToFavPlaylist = async (req: Request, res: Response, next: NextFunction) => {
+  const userId = req.userId;
+
+  try {
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(400).json('Something went wrong');
+    }
+
+    // Check if playlist exists in db
+    const playlist = await Playlist.findOne({
+      deezer_id: req.body.deezer_id,
+    });
+
+    if (!playlist) {
+      const newPlaylist = new Playlist({ ...req.body });
+      await newPlaylist.save();
+
+      await user.updateOne({
+        $push: { playlists: newPlaylist.id },
+      });
+
+      return res.status(201).json({ playlist: newPlaylist, message: 'Playlist added to favorites' });
+    } else {
+
+      // playlist already exists
+      // user possibly already liked the playlist
+
+      if(user.playlists.includes(playlist.id)) {
+        await user.updateOne({
+          $pull: { playlists: playlist.id },
+        });
+
+        return res.status(200).json({ playlist, message: 'Playlist removed from favorites' });
+
+      } else {
+        await user.updateOne({
+          $push: { playlists: playlist.id },
+        });
+
+        return res.status(200).json({ playlist, message: 'Playlist added to favorites' });
+      }
+
+
+    }
+  } catch (error) {
+    return res.status(400).json('Something went wrong!!!');
+  }
+};
+
