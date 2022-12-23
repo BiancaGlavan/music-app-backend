@@ -18,7 +18,6 @@ const signJWTRefreshToken = (userId: string, role = 'user') => {
 
 export const register = async (req: Request, res: Response, next: NextFunction) => {
   try {
-
     // validation schema for register
     const joiSchema = Joi.object({
       name: Joi.string().min(2).required(),
@@ -82,5 +81,43 @@ export const profile = async (req: Request, res: Response, next: NextFunction) =
     return res.status(200).json(user);
   } catch (error) {
     next(error);
+  }
+};
+
+export const updateProfile = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const user = await User.findById(req.userId);
+
+    if(!user){
+      return res.status(400).json('Something went wrong!');
+    }
+
+    // validation schema for updateProfile
+    const joiSchema = Joi.object({
+      name: Joi.string().min(2).required(),
+      image: Joi.string().min(5)
+    });
+
+    const { error } = joiSchema.validate(req.body);
+
+    const newUser = {
+      name: req.body.name,
+      image: req.body.image,
+    }
+
+    // return error message if user input is not correct
+    if (error) {
+      return res.status(400).send(error);
+    }
+
+
+    Object.assign(user, newUser);
+
+
+    const updatedUser = await user.save();
+    return res.status(200).json(updatedUser);
+
+  } catch (error) {
+    return res.status(400).send(error); 
   }
 };
