@@ -45,7 +45,7 @@ app.post('/api/upload', async (req, res) => {
   const contents = sampleFile.data;
 
   const img = await drive.put(name, { data: contents });
-  res.send(img);
+  res.status(201).json(img);
 });
 
 app.get('/api/images/:name', async (req, res) => {
